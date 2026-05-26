@@ -137,6 +137,42 @@ npm run dev
     export default App;
 ```
 
+## ⚙️ 3. Configurações Essenciais (application.properties)
+
+O arquivo `application.properties` (localizado em `src/main/resources/`) é o centro de controle do Spring Boot. É nele que configuramos como a aplicação se comporta, qual banco de dados usar e a porta do servidor, tudo sem alterar o código Java.
+
+Substitua o conteúdo do seu arquivo `application.properties` por este:
+
+```properties
+# -------------------------------------------------------------------
+# CONFIGURAÇÕES DO SERVIDOR
+# -------------------------------------------------------------------
+server.port=8080
+
+# -------------------------------------------------------------------
+# CONFIGURAÇÕES DO BANCO DE DADOS (H2 em Memória)
+# -------------------------------------------------------------------
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# Habilita o painel do H2 no navegador (http://localhost:8080/h2-console)
+spring.h2.console.enabled=true
+spring.h2.console.settings.web-allow-others=true
+
+# -------------------------------------------------------------------
+# CONFIGURAÇÕES DO JPA / HIBERNATE
+# -------------------------------------------------------------------
+# Cria e atualiza as tabelas automaticamente com base na classe Java
+spring.jpa.hibernate.ddl-auto=update
+
+# Mostra no console do terminal os comandos SQL sendo executados
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+
 -----
 
 ### 🛠️ Resolução de Problemas (FAQ)
@@ -144,7 +180,6 @@ npm run dev
 - **"Erro de CORS"**: No Java, o @CrossOrigin deve apontar exatamente para a porta do React (5173).
 - **"Lista não carrega":** Verifique no Console do Navegador (F12) se a requisição para 8080 está retornando erro.
 - **"Comando npm não encontrado"**: Verifique se o Node.js está instalado corretamente na máquina do laboratório.
-
 
 -----
 
