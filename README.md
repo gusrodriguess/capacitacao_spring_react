@@ -26,6 +26,7 @@ Nosso objetivo é criar uma API robusta que gerencia os dados dos convidados usa
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
+        @NotBlank(message = "O nome do convidado é obrigatório")
         private String nome;
         private boolean confirmado;
     }
@@ -69,7 +70,7 @@ Nosso objetivo é criar uma API robusta que gerencia os dados dos convidados usa
         }
 
         @PostMapping
-        public Convidado salvar(@RequestBody Convidado c) {
+        public Convidado salvar(@Valid @RequestBody Convidado c) {
             return service.salvar(c);
         }
     }
