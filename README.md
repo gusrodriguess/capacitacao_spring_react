@@ -13,7 +13,7 @@ Antes de começarmos, garanta que sua máquina está pronta:
 
 ---
 
-## 🟢 PARTE 1: Backend (Spring Boot)
+## Backend (Spring Boot)
 Nosso objetivo é criar uma API robusta que gerencia os dados dos convidados usando uma arquitetura em camadas.
 
 ### 🚀 Fluxo de Desenvolvimento e Camadas:
@@ -78,9 +78,72 @@ Nosso objetivo é criar uma API robusta que gerencia os dados dos convidados usa
 
 > **✅ Teste de Sucesso:** Execute o projeto Java e abra o navegador em `http://localhost:8080/api/convidados`. Se aparecer `[]`, o backend está pronto!
 
+
+5. ** Outras Informações Revelantes: **
+#### Mapeamento de Banco de Dados (JPA / Hibernate)
+
+`@Entity`
+- Diz ao Spring/Hibernate: "Esta classe representa uma tabela no banco de dados". Cada objeto criado a partir dela será uma linha nessa tabela.
+
+`@Id e @GeneratedValue`
+Trabalham sempre juntas no atributo que será a Chave Primária da tabela.
+- `@Id`: Identifica o campo como o ID único da entidade.
+- `@GeneratedValue(strategy = GenerationType.IDENTITY)`: Diz para o banco de dados gerar esse ID automaticamente (1, 2, 3...).
+
+`@Column`
+- Usada quando você quer customizar uma coluna da tabela. Por exemplo, mudar o nome da coluna no banco ou dizer que ela não pode ser vazia: @Column(name = "nome_completo", nullable = false).
+
+#### Relacionamentos entre Tabelas
+Raramente um sistema tem apenas uma tabela. Para ligar uma tabela à outra, usamos:
+
+`@OneToMany / @ManyToOne`: 
+- O relacionamento mais comum (Um-para-Muitos / Muitos-para-Um). Ex: Um Convidado pertence a um Evento (ManyToOne), e um Evento tem vários Convidados (OneToMany).
+
+`@ManyToMany`: 
+- Muitos-para-Muitos. Ex: Alunos e Disciplinas (um aluno faz várias disciplinas, e uma disciplina tem vários alunos).
+
+#### Validação de Dados (Bean Validation)
+
+`@NotBlank`: 
+- Garante que o texto não foi enviado vazio ou apenas com espaços.
+`@Size(min = 2, max = 50)`:
+Define um limite mínimo e máximo de caracteres.
+`@Email`:
+- Valida se o formato do texto é de um e-mail válido.
+`@Positive`:
+- Garante que o número enviado é maior que zero (ótimo para preços ou idades).
+
+```java
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+@Entity // Diz que vira tabela no banco
+@Table(name = "tb_convidados") // Define o nome da tabela
+public class Convidado {
+
+    @Id // Chave primária
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incremento
+    private Long id;
+
+    @NotBlank(message = "O nome não pode ser vazio") // Validação
+    @Size(min = 3, message = "O nome deve ter pelo menos 3 caracteres")
+    @Column(name = "nome_completo", nullable = false) // Customização do banco
+    private String nome;
+
+    private boolean confirmado;
+
+    // Construtores, Getters e Setters...
+}
+```
+
+⚠️ Nota: Para que essas validações funcionem, você precisa colocar a anotação @Valid antes do @RequestBody lá no seu Controller.
 ---
 
-## 🔵 PARTE 2: Frontend (React)
+
+
+
+## Frontend (React)
 Agora vamos criar a interface visual e conectá-la à nossa API.
 
 ### 🚀 Comandos Iniciais:
