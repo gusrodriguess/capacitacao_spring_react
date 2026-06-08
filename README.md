@@ -200,6 +200,166 @@ npm run dev
     export default App;
 ```
 
+### Implementando mais elementos do React (Componentes)
+##### src/components/Formulario.jsx
+```javascript
+    import { useState } from 'react';
+    
+    function Formulario({ onCadastrar }) {
+      const [valorInput, setValorInput] = useState("");
+    
+      const handleSubmit = (e) => {
+        e.preventDefault(); // Evita que a página recarregue ao submeter o formulário
+        if (!valorInput.trim()) return;
+        
+        onCadastrar(valorInput); // Dispara a função do componente pai
+        setValorInput(""); // Limpa o campo
+      };
+    
+      return (
+        <form onSubmit={handleSubmit} className="input-box">
+          <input 
+            value={valorInput} 
+            onChange={(e) => setValorInput(e.target.value)} 
+            placeholder="Nome do convidado..." 
+          />
+          <button type="submit">Adicionar</button>
+        </form>
+      );
+    }
+    
+    export default Formulario;
+```
+
+##### src/components/ItemConvidado.jsx
+```javascript
+    function ItemConvidado({ convidado, onAlternar, onDeletar }) {
+      return (
+        <li className="convidado-item">
+          <span 
+            onClick={() => onAlternar(convidado)} 
+            style={{ cursor: 'pointer' }}
+            className={convidado.confirmado ? "confirmado" : "pendente"}
+          >
+            {convidado.nome} - {convidado.confirmado ? "✅ Confirmado" : "⏳ Pendente"}
+          </span>
+          <button className="btn-deletar" onClick={() => onDeletar(convidado.id)}>❌</button>
+        </li>
+      );
+    }
+    
+    export default ItemConvidado;
+```
+
+##### src/components/ListaConvidados.jsx
+```javascript
+    import ItemConvidado from './ItemConvidado';
+    
+    function ListaConvidados({ convidados, onAlternar, onDeletar }) {
+      if (convidados.length === 0) {
+        return <p>Nenhum convidado na lista ainda.</p>;
+      }
+    
+      return (
+        <ul>
+          {convidados.map(c => (
+            <ItemConvidado 
+              key={c.id} 
+              convidado={c} 
+              onAlternar={onAlternar} 
+              onDeletar={onDeletar} 
+            />
+          ))}
+        </ul>
+      );
+    }
+    
+    export default ListaConvidados;
+```
+
+##### O novo App.jsx
+```javascript
+    import { useState, useEffect } from 'react';
+    import Formulario from './components/Formulario';
+    import ListaConvidados from './components/ListaConvidados';
+    import './App.css';
+    
+    function App() {
+      const [convidados, setConvidados] = useState([]);
+      const [carregando, setCarregando] = useState(true);
+    
+      // GET - Buscar dados
+      useEffect(() => {
+        fetch("http://localhost:8080/api/convidados")
+          .then(res => res.json())
+          .then(dados => {
+            setConvidados(dados);
+            setCarregando(false);
+          });
+      }, []);
+    
+      // POST - Cadastrar
+      const cadastrarConvidado = async (nomeDigitado) => {
+        const res = await fetch("http://localhost:8080/api/convidados", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome: nomeDigitado, confirmado: false })
+        });
+        const novo = await res.json();
+        setConvidados([...convidados, novo]);
+      };
+    
+      // PUT - Alternar Status
+      const alternarConfirmacao = async (convidado) => {
+        const res = await fetch(`http://localhost:8080/api/convidados/${convidado.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...convidado, confirmado: !convidado.confirmado })
+        });
+        const atualizado = await res.json();
+        setConvidados(convidados.map(c => c.id === convidado.id ? atualizado : c));
+      };
+    
+      // DELETE - Remover
+      const deletarConvidado = async (id) => {
+        if (!confirm("Deseja remover?")) return;
+        await fetch(`http://localhost:8080/api/convidados/${id}`, { method: "DELETE" });
+        setConvidados(convidados.filter(c => c.id !== id));
+      };
+    
+      // Métricas derivadas do estado (Cálculos dinâmicos)
+      const total = convidados.length;
+      const confirmados = convidados.filter(c => c.confirmado).length;
+    
+      if (carregando) return <div className="container"><p>Carregando...</p></div>;
+    
+      return (
+        <div className="container">
+          <h1>Lista de Convidados</h1>
+          
+          {/* Elemento de Métricas */}
+          <div className="dashboard-cards">
+            <div className="card">Total: <strong>{total}</strong></div>
+            <div className="card">Confirmados: <strong>{confirmados}</strong></div>
+            <div className="card">Pendentes: <strong>{total - confirmados}</strong></div>
+          </div>
+    
+          {/* Componente de Formuário */}
+          <Formulario onCadastrar={cadastrarConvidado} />
+    
+          {/* Componente de Lista */}
+          <ListaConvidados 
+            convidados={convidados} 
+            onAlternar={alternarConfirmacao} 
+            onDeletar={deletarConvidado} 
+          />
+        </div>
+      );
+    }
+    
+    export default App;
+```
+
 ## ⚙️ 3. Configurações Essenciais (application.properties)
 
 O arquivo `application.properties` (localizado em `src/main/resources/`) é o centro de controle do Spring Boot. É nele que configuramos como a aplicação se comporta, qual banco de dados usar e a porta do servidor, tudo sem alterar o código Java.
