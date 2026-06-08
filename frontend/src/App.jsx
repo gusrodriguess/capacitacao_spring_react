@@ -1,122 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import Formulario from './components/Formulario';
+import ListaConvidados from './components/ListaConvidados';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [convidados, setConvidados] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  // GET - Buscar dados
+  useEffect(() => {
+    fetch("http://localhost:8080/convidados")
+      .then(res => res.json())
+      .then(dados => {
+        setConvidados(dados);
+        setCarregando(false);
+      });
+  }, []);
+
+  // POST - Cadastrar
+  const cadastrarConvidado = async (nomeDigitado) => {
+    const res = await fetch("http://localhost:8080/convidados", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: nomeDigitado, confirmado: false })
+    });
+    const novo = await res.json();
+    setConvidados([...convidados, novo]);
+  };
+
+  // PUT - Alternar Status
+  const alternarConfirmacao = async (convidado) => {
+    const res = await fetch(`http://localhost:8080/convidados/${convidado.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...convidado, confirmado: !convidado.confirmado })
+    });
+    const atualizado = await res.json();
+    setConvidados(convidados.map(c => c.id === convidado.id ? atualizado : c));
+  };
+
+  // DELETE - Remover
+  const deletarConvidado = async (id) => {
+    if (!confirm("Deseja remover?")) return;
+    await fetch(`http://localhost:8080/convidados/${id}`, { method: "DELETE" });
+    setConvidados(convidados.filter(c => c.id !== id));
+  };
+
+  // Métricas derivadas do estado (Cálculos dinâmicos)
+  const total = convidados.length;
+  const confirmados = convidados.filter(c => c.confirmado).length;
+
+  // if (carregando) return <div className="container"><p>Carregando...</p></div>;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="container">
+      <h1>Lista de Convidados</h1>
 
-      <div className="ticks"></div>
+      {/* Elemento de Métricas */}
+      <div className="dashboard-cards">
+        <div className="card">Total: <strong>{total}</strong></div>
+        <div className="card">Confirmados: <strong>{confirmados}</strong></div>
+        <div className="card">Pendentes: <strong>{total - confirmados}</strong></div>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Componente de Formuário */}
+      <Formulario onCadastrar={cadastrarConvidado} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Componente de Lista */}
+      <ListaConvidados
+        convidados={convidados}
+        onAlternar={alternarConfirmacao}
+        onDeletar={deletarConvidado}
+      />
+    </div>
+  );
 }
 
-export default App
+export default App;
